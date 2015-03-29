@@ -14,27 +14,9 @@
 
 static MGVTBL subname_vtbl;
 
-#ifndef PERL_MAGIC_ext
-# define PERL_MAGIC_ext '~'
-#endif
-#ifndef SvMAGIC_set
-#define SvMAGIC_set(sv, val) (SvMAGIC(sv) = (val))
-#endif
-#ifndef Newxz
-#define Newxz(ptr, num, type)	Newz(0, ptr, num, type)
-#endif
-#ifndef gv_fetchpvn
-#define gv_fetchpvn(s, len, add, type) gv_fetchpv(s, add, type)
-#define HvNAMELEN(hv)		strlen(HvNAME(hv))
-#define HvNAMEUTF8(hv)		0
-#else
-#ifndef HvNAMELEN
-#define HvNAMELEN(hv)		((SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name && HvNAME_HEK_NN(hv)) \
-				 ? HEK_LEN(HvNAME_HEK_NN(hv)) : 0)
-#define HvNAMEUTF8(hv) \
-	((SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name && HvNAME_HEK_NN(hv)) \
-				 ? HEK_UTF8(HvNAME_HEK_NN(hv)) : 0)
-#endif
+/* Not in ppport yet: */
+#ifndef HvNAMEUTF8
+#  define HvNAMEUTF8(hv)		0
 #endif
 
 MODULE = Sub::Name  PACKAGE = Sub::Name
@@ -65,7 +47,7 @@ subname(name, sub)
                 /* TODO: utf8 and binary name */
 		croak("Can't use string (\"%.32s\") as %s ref while \"strict refs\" in use",
 		      SvPV_nolen(sub), "a subroutine");
-	else if ((gv = gv_fetchpvn(SvPV_nolen(sub), SvCUR(sub), FALSE, SVt_PVCV)))
+	else if ((gv = gv_fetchpvn_flags(SvPV_nolen(sub), SvCUR(sub), FALSE, SVt_PVCV)))
 		cv = GvCVu(gv);
 	if (!cv) /* TODO: utf8 and binary name */
 		croak("Undefined subroutine %s", SvPV_nolen(sub));
@@ -84,7 +66,7 @@ subname(name, sub)
 	}
         if (end) {
                 len = s - end;
-		stash = GvHV(gv_fetchpvn(SvPVX(name), end - SvPVX(name), TRUE, SVt_PVHV));
+		stash = GvHV(gv_fetchpvn_flags(SvPVX(name), end - SvPVX(name), TRUE, SVt_PVHV));
                 s = end;
         } else {
         	len = s - SvPVX(name);
@@ -96,7 +78,7 @@ subname(name, sub)
 		HV *hv = GvHV(PL_DBsub);
                 GV *oldgv = CvGV(cv);
                 HV *oldpkg = GvSTASH(oldgv);
-                SV *full_name = newSVpvn_flags(HvNAME(oldpkg), HvNAMELEN(oldpkg),
+                SV *full_name = newSVpvn_flags(HvNAME(oldpkg), HvNAMELEN_get(oldpkg),
                                                HvNAMEUTF8(oldpkg));
 		SV** old_data;
 
@@ -106,7 +88,7 @@ subname(name, sub)
 		old_data = hv_fetch(hv, SvPVX(full_name), SvCUR(full_name), 0);
 
 		if (old_data) {
-                        full_name = newSVpvn_flags(HvNAME(stash), HvNAMELEN(stash),
+                        full_name = newSVpvn_flags(HvNAME(stash), HvNAMELEN_get(stash),
                                                    HvNAMEUTF8(stash));
                         sv_catpvs(full_name, "::");
                         sv_catpvn(full_name, s, len);

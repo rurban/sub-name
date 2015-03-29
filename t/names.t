@@ -36,9 +36,10 @@ use Sub::Name 'subname';
 
 my @test_ordinals = ( 1 .. 255 );
 
-# 5.14 is the first perl to start properly handling \0 in identifiers
+# 5.16 is the first perl to start handling \0 in identifiers
+# and it's a bit safer to use since 5.22, but still not fully supported.
 push @test_ordinals, 0
-    unless $] < 5.014;
+    unless $] < 5.016;
 
 # This is a mess. Yes, the stash supposedly can handle unicode, yet
 # on < 5.16 the behavior is literally undefined (with crashes beyond
