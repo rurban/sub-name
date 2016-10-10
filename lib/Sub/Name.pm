@@ -56,8 +56,8 @@ use warnings;
 
 our $VERSION = '0.21';
 
-use Exporter 5.57 'import';
-
+require Exporter; # 5.57 'import';
+our @ISA    = qw{Exporter};
 our @EXPORT = qw(subname);
 our @EXPORT_OK = @EXPORT;
 
